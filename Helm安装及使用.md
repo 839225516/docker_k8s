@@ -18,7 +18,7 @@ Helm的三个基本概念：
 k8s node 全局节点
 ```
 
-#### 1）安装Helm客户端：####
+#### 1）安装Helm客户端： ####
 ```shell
 # wget https://kubernetes-helm.storage.googleapis.com/helm-v2.7.2-linux-amd64.tar.gz
 # tar zxf helm-v2.7.2-linux-amd64.tar.gz
