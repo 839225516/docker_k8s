@@ -111,3 +111,23 @@ Docker 镜像是一个特殊的文件系统，除了提供容器运行时所需�
 从容器里拷贝文件/目录到本地
 # docker cp {containID/containName}:/{container_path}  {local_path}
 ```
+
+### 镜像加速器 ###
+国内从 Docker Hub 拉取镜像有时会遇到困难，此时可以配置镜像加速器
+
+Docker 官方加速器： https://registry.docker-cn.com
+
+#### ubuntu,debian,centos7 ####
+对于使用systemd的系统，编辑 /etc/docker/daemon.json中写入
+```json
+{
+  "registry-mirrors": [
+    "https://registry.docker-cn.com"
+  ]
+}
+```
+之后重启docker服务
+```shell
+# systemctl daemon-reload
+# systemctl restart docker
+```
