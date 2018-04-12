@@ -34,7 +34,7 @@ WARNING: IPv4 forwarding is disabled. Networking will not work.
 ```
 
 解决办法：
-vim /usr/lib/sysctl.d/00-system.cof
+vim /usr/lib/sysctl.d/00-system.conf
 ``` shell 
 # 添加一行
 net.ipv4.ip_forward = 1
