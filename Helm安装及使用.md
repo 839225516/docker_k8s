@@ -141,3 +141,24 @@ install 时用 -n指定 release的名字
 
 ```
 
+------------------------------------------
+#### heml 私有仓库搭建  ####
+创建本地chart仓库
+``` shell 
+# helm serve –address 0.0.0.0:8879 –repo-path /data/helm-repo &
+```
+
+打包一个charts,accp-finance-0.1.5.tgz
+``` shell 
+# helm package [flags] [CHART_PATH] [...]
+# helm package accp-finance
+```
+
+上传chart到charts仓库，并更新index.yaml
+```shell
+# mv accp-finance-0.1.5.tgz /data/helm-repo
+# helm repo index accp-finance --url http://172.20.2.236:8879
+```
+
+
+
