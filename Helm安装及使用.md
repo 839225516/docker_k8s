@@ -157,7 +157,7 @@ install 时用 -n指定 release的名字
 上传chart到charts仓库，并将chart的metadata记录在index.yaml文件
 ```shell
 # mv accp-finance-0.1.5.tgz /data/helm-repo
-# helm repo index accp-finance --url http://172.20.2.236:8879
+# helm repo index /data/helm-repo --url http://172.20.2.236:8879
 ```
 
 查看charts 
