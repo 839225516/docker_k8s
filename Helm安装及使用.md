@@ -146,6 +146,12 @@ install 时用 -n指定 release的名字
 创建本地chart仓库
 ``` shell 
 # helm serve –address 0.0.0.0:8879 –repo-path /data/helm-repo &
+
+# helm repo list
+NAME  	URL                                                   
+stable	https://kubernetes.oss-cn-hangzhou.aliyuncs.com/charts
+local 	http://127.0.0.1:8879/charts                          
+jlpay 	http://172.20.2.236:8879         
 ```
 
 打包一个charts,accp-finance-0.1.5.tgz
