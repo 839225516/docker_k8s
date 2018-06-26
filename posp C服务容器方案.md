@@ -201,6 +201,7 @@ git:
   project: "http://172.20.5.54/posp/posp_c/account_confirm.git"
   revision: "ecc71b65f2f09b2a044dff8d7f12d777e052b8b3"
 runenv: "pre"
+# runenv 运行环境有 test pre product
 ```
 
 ##### 制作dock镜像及helm charts
