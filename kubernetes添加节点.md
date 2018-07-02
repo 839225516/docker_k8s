@@ -293,4 +293,3 @@ kubectl get nodes
 #### k8s node 的维护模式
 维护模式是将 node 设置为cordon状态，并在其它node重新创建本节点的pod，evict(回收)本节点的pod
 > kubectl drain {node_NAME}
-
