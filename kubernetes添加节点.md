@@ -275,4 +275,22 @@ kubectl certificate approve {NAME}
 kubectl get nodes
 ```
 
+#### 将k8s的node节点设置不可以使用
+暂时不能让生成的pod在此node上运行，需要通知kubernetes让其不要创建过来，这条命令就是cordon，uncordon则是取消这个设置
+```shell
+查看 node NAME
+# kubectl get nodes
+
+根据node-NAME 将node 设置为不可以使用
+# kubectl cordon {node-NAME}
+
+将node 设置为可以使用
+# kubectl uncordon {node-NAME}
+# 
+```
+
+
+#### k8s node 的维护模式
+维护模式是将 node 设置为cordon状态，并在其它node重新创建本节点的pod，evict(回收)本节点的pod
+> kubectl drain {node_NAME}
 
