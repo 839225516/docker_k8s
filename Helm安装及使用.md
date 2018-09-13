@@ -27,6 +27,12 @@ k8s node 全局节点
 #### 2） RBAC ####
 tiller部署在Kubernetes 1.8上，Kubernetes APIServer开启了RBAC访问控制，所以我们需要创建tiller使用的service account: tiller并分配合适的角色给它
 
+```shell
+kubectl create serviceaccount --namespace kube-system tiller
+kubectl create clusterrolebinding tiller-cluster-rule --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
+kubectl patch deploy --namespace kube-system tiller-deploy -p '{"spec":{"template":{"spec":{"serviceAccount":"tiller"}}}}'
+```
+
 创建rbac-config.yaml文件：
 ```yaml
 apiVersion: v1
