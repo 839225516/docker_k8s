@@ -132,6 +132,31 @@ Docker 镜像是一个特殊的文件系统，除了提供容器运行时所需�
 
 从容器里拷贝文件/目录到本地
 # docker cp {containID/containName}:/{container_path}  {local_path}
+
+
+
+容器删除常用命令：
+杀死所有正在运行的容器
+docker kill $(docker ps -a -q)
+
+删除所有已经停止的容器
+docker rm $(docker ps -a -q)
+
+删除所有未打 dangling 标签的镜像
+docker rmi $(docker images -q -f dangling=true)
+
+删除所有镜像
+docker rmi $(docker images -q)
+
+强制删除镜像名称中包含“doss-api”的镜像
+docker rmi --force $(docker images | grep doss-api | awk '{print $3}')
+
+删除所有未使用数据
+docker system prune
+
+只删除未使用的volumes
+docker volume prune
+
 ```
 
 ### 镜像加速器 ###
