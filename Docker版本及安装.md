@@ -162,5 +162,13 @@ gpgkey=https://download.docker.com/linux/centos/gpg
 # systemctl start docker
 ```
 
+#### docker 安装报错 container-selinux >= 2.9
+这个报错是container-selinux版本低或者是没安装的原因   
+需要安装epel源 才能yum安装container-selinux   
+
+``` shell 
+yum install epel-release
+yum install container-selinux
+```
 
 
