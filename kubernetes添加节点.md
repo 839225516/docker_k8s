@@ -25,7 +25,7 @@ mkdir -p /usr/lib/systemd/system/docker.service.d/
 
 vim /usr/lib/systemd/system/docker.service.d/docker-options.conf
 [Service]
-Environment="DOCKER_OPTS=--insecure-registry=http://10.0.116.41:80 --graph=/opt/docker --registry-mirror=http://b438f72b.m.daocloud.io --disable-legacy-registry"
+Environment="DOCKER_OPTS=--insecure-registry=http://10.0.116.41:80 --graph=/data/docker --registry-mirror=http://b438f72b.m.daocloud.io --disable-legacy-registry"
 
 vim /usr/lib/systemd/system/docker.service.d/docker-dns.conf
 [Service]
