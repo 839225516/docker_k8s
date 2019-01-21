@@ -35,6 +35,23 @@ Environment="DOCKER_DNS_OPTIONS=\
     --dns-opt ndots:2 --dns-opt timeout:2 --dns-opt attempts:2  \
 ```
 
+docker 18.06配置修改
+```shell
+vim  /etc/docker/daemon.json
+
+{
+  "insecure-registries": ["https://registry.jlpay.io", "http://10.0.116.41:80"], 
+  "max-concurrent-downloads": 10,
+  "log-driver": "json-file",
+  "log-level": "warn",
+  "log-opts": {
+    "max-size": "10m",
+    "max-file": "3"
+    },
+  "graph": "/data/docker"
+}
+```
+
 ##### 将iptables FORWARD链的默认策略修改为ACCEPT
 安装 docker 之后，会将iptables的FORWARD链设置为DROP，需要修改为ACCEPT
 ```shell
