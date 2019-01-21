@@ -156,6 +156,8 @@ ExecStart=/usr/local/bin/kubelet \
   --cluster_domain=cluster.local. \
   --hairpin-mode promiscuous-bridge \
   --allow-privileged=true \
+  --serialize-image-pulls=false \
+  --feature-gates=RotateKubeletServerCertificate=true \
   --fail-swap-on=false \
   --serialize-image-pulls=false \
   --logtostderr=true \
