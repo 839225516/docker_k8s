@@ -171,4 +171,9 @@ yum install epel-release
 yum install container-selinux
 ```
 
+也可以手动安装
+错误：依赖检测失败：
+container-selinux >= 2.9 被 docker-ce-17.06.2.ce-1.el7.centos.x86_64 需要  
+前往：http://mirror.centos.org/centos/7/extras/x86_64/Packages/ ，下载container-selinux  
+
 

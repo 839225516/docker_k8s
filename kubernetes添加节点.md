@@ -25,7 +25,7 @@ mkdir -p /usr/lib/systemd/system/docker.service.d/
 
 vim /usr/lib/systemd/system/docker.service.d/docker-options.conf
 [Service]
-Environment="DOCKER_OPTS=--insecure-registry=http://10.0.116.41:80 --graph=/opt/docker --registry-mirror=http://b438f72b.m.daocloud.io --disable-legacy-registry"
+Environment="DOCKER_OPTS=--insecure-registry=http://10.0.116.41:80 --graph=/data/docker --registry-mirror=http://b438f72b.m.daocloud.io --disable-legacy-registry"
 
 vim /usr/lib/systemd/system/docker.service.d/docker-dns.conf
 [Service]
@@ -33,6 +33,23 @@ Environment="DOCKER_DNS_OPTIONS=\
     --dns 172.200.0.2 --dns 114.114.114.114  \
     --dns-search default.svc.cluster.local --dns-search svc.cluster.local  \
     --dns-opt ndots:2 --dns-opt timeout:2 --dns-opt attempts:2  \
+```
+
+docker 18.06配置修改
+```shell
+vim  /etc/docker/daemon.json
+
+{
+  "insecure-registries": ["https://registry.jlpay.io", "http://10.0.116.41:80"], 
+  "max-concurrent-downloads": 10,
+  "log-driver": "json-file",
+  "log-level": "warn",
+  "log-opts": {
+    "max-size": "10m",
+    "max-file": "3"
+    },
+  "graph": "/data/docker"
+}
 ```
 
 ##### 将iptables FORWARD链的默认策略修改为ACCEPT
@@ -139,6 +156,8 @@ ExecStart=/usr/local/bin/kubelet \
   --cluster_domain=cluster.local. \
   --hairpin-mode promiscuous-bridge \
   --allow-privileged=true \
+  --serialize-image-pulls=false \
+  --feature-gates=RotateKubeletServerCertificate=true \
   --fail-swap-on=false \
   --serialize-image-pulls=false \
   --logtostderr=true \
