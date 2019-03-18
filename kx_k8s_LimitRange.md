@@ -217,7 +217,7 @@ Error from server (Forbidden): error when creating "limits-set-demo.yaml": pods 
 pod的container在不设置request和limits时，container取默认的defaultRequest和default    
 pod的container在设置request和limits时，request和limit的取值必须在区间[min,max]内    
 pod的container在只设置requests时,limits取默认的default   
-pod的container在只设置limits时，requests=limists
+pod的container在只设置limits时，requests=limists  
 
 
 
