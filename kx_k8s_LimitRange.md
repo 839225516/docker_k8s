@@ -3,8 +3,10 @@
 
     设置POD创建时要求Node节点必须有空闲资源：   500mCPU 和 1Gi内存
     设置POD最大能使用的CPU和内存资源:          2CPU 和 4Gi内存
-    设置Container创建时默认的最小需求资源:      500mCPU 和 2Gi内存      
-
+    设置Container创建时默认的最小需求资源:      500mCPU 和 1Gi内存      
+    设置Container创建时默认的最大需求资源:      2CPU 和 4Gi内存
+    设置container的cpu设置取值范围：           [200m, 2]
+    设置container的内存设置取值范围：          [512Mi,4Gi]
 
 
 product-limitrange.yaml
