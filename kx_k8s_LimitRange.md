@@ -146,7 +146,8 @@ spec:
         memory: 4Gi
 ```
 
-3. 在namespace  product下创建一个pod，pod指定container只设置requests时,limits则取default
+3. 在namespace  product下创建一个pod，pod指定container只设置requests时,limits则取default  
+limists-min-demo.yaml
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -157,6 +158,20 @@ spec:
   - name: limits-demo
     image: envoyproxy/envoy
     resources:
+      requests:
+        cpu: "1"
+        memory: 2000Mi
+```
+
+```shell
+kubectl create -f limists-min-demo.yaml -n product 
+
+kubectl get pod limits-min-demo -o yaml -n product 
+spec:
+    resources:
+      limits:
+        cpu: "2"
+        memory: 4Gi
       requests:
         cpu: "1"
         memory: 2000Mi
