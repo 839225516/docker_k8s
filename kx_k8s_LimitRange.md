@@ -1,12 +1,12 @@
 #### k8s使用LimitRange对namespace级做资源限制
 对namespace: product设置CPU和内存资源限制
 
-    设置POD创建时要求Node节点必须有空闲资源：   500mCPU 和 1Gi内存
+    设置POD创建时要求Node节点必须有空闲资源：   200mCPU 和 1Gi内存
     设置POD最大能使用的CPU和内存资源:          2CPU 和 4Gi内存
-    设置Container创建时默认的最小需求资源:      500mCPU 和 1Gi内存      
-    设置Container创建时默认的最大需求资源:      2CPU 和 4Gi内存
-    设置container的cpu设置取值范围：           [200m, 2]
-    设置container的内存设置取值范围：          [512Mi,4Gi]
+    设置Container创建时默认的最小需求资源:      50mCPU 和 256Mi内存      
+    设置Container创建时默认的最大需求资源:      1CPU 和 2Gi内存
+    设置container的cpu设置取值范围：           [50m, 2]
+    设置container的内存设置取值范围：          [128Mi,4Gi]
 
 
 product-limitrange.yaml
@@ -19,24 +19,24 @@ metadata:
 spec:
   limits:
   - max:
-      cpu: "2"
+      cpu: "4"
       memory: 4Gi
     min:
-      cpu: 500m
+      cpu: 200m
       memory: 1Gi
     type: Pod
   - default:
-      cpu: "2"
-      memory: 4Gi
+      cpu: "1"
+      memory: 2Gi
     defaultRequest:
-      cpu: 500m
-      memory: 1Gi
+      cpu: 50m
+      memory: 256Mi
     max:
       cpu: "2"
-      memory: 4Gi
+      memory: 2Gi
     min:
-      cpu: 500m
-      memory: 512Mi
+      cpu: 50m
+      memory: 128Mi
     type: Container
 ```
 ```shell
@@ -48,15 +48,15 @@ Name:       mylimits
 Namespace:  product
 Type        Resource  Min   Max  Default Request  Default Limit  Max Limit/Request Ratio
 ----        --------  ---    ---  ---------------  -------------  -----------------------
-Pod         cpu       500m   2    -                -              -
+Pod         cpu       200m   2    -                -              -
 Pod         memory    1Gi    4Gi  -                -              -
-Container   cpu       500m   2    500m             2              -
-Container   memory    512Mi  4Gi  1Gi              4Gi            -
+Container   cpu       50m    2    50m              1              -
+Container   memory    125Mi  4Gi  256Mi            2Gi            -
 ```
 
 pod资源限制：
 
-    创建阶段： 必须满足有 1Gi内存 和 500毫核CPU 的硬件资源
+    创建阶段： 必须满足有 1Gi内存 和 200毫核CPU 的硬件资源
     使用阶段： pod允许使用的 最大内存为4Gi 和 最大CPU为2核
 
 
@@ -65,7 +65,7 @@ container资源限制：
     default:          配置resourceQuota时，创建container的 默认limit上限
     defaultRequest:   配置resourceQuota时，创建container的 默认request上限
 
-    创建阶段:          必须满足每个容器有 500mCPU 和 512Mi内存 的硬件资源
+    创建阶段:          必须满足每个容器有 50mCPU 和 128Mi内存 的硬件资源
     使用阶段：         container允许使用的 最大内存为4Gi 和 2核CPU
     其中： min <= defaultRequest <= default <= max 
 

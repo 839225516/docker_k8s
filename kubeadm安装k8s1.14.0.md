@@ -329,4 +329,10 @@ kubectl get pod -n kube-system | grep kube-proxy | awk '{system("kubectl delete 
 
 13. k8s 常用组件安装   
 
+13.1 helm 
+```shell
+wget https://github.com/839225516/docker_k8s/blob/master/k8s_install_1.14.0_ha/helm-2.13.1/helm-v2.12.3-linux-amd64.tar.gz
+tar zxf helm-v2.12.3-linux-amd64.tar.gz
+cd linux-amd64/
 
+```
