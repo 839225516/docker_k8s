@@ -194,12 +194,10 @@ apiServer:
   - ${CP0_IP}
   - ${CP1_IP}
   - ${CP2_IP}
-  #- ${VIP}
+  - ${VIP}
 networking:
   # This CIDR is a Calico default. Substitute or remove for your CNI provider.
   podSubnet: ${CIDR}
-featureGates:
-  CoreDNS: true
 ---
 apiVersion: kubeproxy.config.k8s.io/v1alpha1
 kind: KubeProxyConfiguration
@@ -224,7 +222,7 @@ kubectl get nodes
 ```
 
 ###### 安装另外两台 mastser
-同步 ca 文件到 master:  sync_master_ca.sh
+同步 ca 文件到 master:  sync_ca_install_master.sh
 ```shell
 #!/bin/sh
 
@@ -273,7 +271,7 @@ do
   echo "start install k8s master"
 
   # --experimental-control-plane  创建一个master实例
-  ssh ${ip} "${JOIN_CMD} --experimental-control-plane"
+  ssh ${h} "${JOIN_CMD} --experimental-control-plane"
 done
 
 echo "k8s Cluster create finished."
@@ -289,8 +287,20 @@ kubeadm token create --print-join-command
 
 ```
 
-9 安装 coreDNS 插件
+9. 安装 coreDNS 插件
 ```shell 
 # 替换 pod CIDR
 curl -fsSL https://raw.githubusercontent.com/839225516/docker_k8s/master/k8s_install_1.14.0_ha/calico.yaml | sed "s!10.172.0.0/16!${CIDR}!g" | kubectl apply -f -
+```
+
+10. master node 去污点参考Schedule    
+使用kubeadm初始化的集群，出于安全考虑Pod不会被调度到Master Node上，也就是说Master Node不参与工作负载。     
+这是因为当前的master节点node1被打上了node-role.kubernetes.io/master:NoSchedule的污点：
+```shell
+kubectl describe node kube-node1 | grep Taint
+#Taints:             node-role.kubernetes.io/master:NoSchedule
+
+# 去掉污点
+kubectl taint nodes node1 node-role.kubernetes.io/master-
+#node "node1" untainted
 ```
