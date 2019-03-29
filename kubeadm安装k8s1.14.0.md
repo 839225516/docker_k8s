@@ -304,3 +304,29 @@ kubectl describe node kube-node1 | grep Taint
 kubectl taint nodes node1 node-role.kubernetes.io/master-
 #node "node1" untainted
 ```
+
+11. 测试DNS
+```shell
+kubectl run curl --image=radial/busyboxplus:curl -it
+
+nslookup kubernetes.default
+Server:    10.96.0.10
+Address 1: 10.96.0.10 kube-dns.kube-system.svc.cluster.local
+
+
+Name:      kubernetes.default
+Address 1: 10.96.0.1 kubernetes.default.svc.cluster.local
+```
+
+12. kube-proxy开启ipvs    
+修改ConfigMap的kube-system/kube-proxy中的config.conf，mode: "ipvs"   
+```shell
+kubectl edit cm kube-proxy -n kube-system
+
+# 修改完后，重启各个节点的 kube-proxy pod
+kubectl get pod -n kube-system | grep kube-proxy | awk '{system("kubectl delete pod "$1" -n kube-system")}'
+```
+
+13. k8s 常用组件安装   
+
+
