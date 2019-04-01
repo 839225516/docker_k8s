@@ -331,8 +331,61 @@ kubectl get pod -n kube-system | grep kube-proxy | awk '{system("kubectl delete 
 
 13.1 helm 
 ```shell
-wget https://github.com/839225516/docker_k8s/blob/master/k8s_install_1.14.0_ha/helm-2.13.1/helm-v2.12.3-linux-amd64.tar.gz
-tar zxf helm-v2.12.3-linux-amd64.tar.gz
+wget https://storage.googleapis.com/kubernetes-helm/helm-v2.12.3-linux-amd64.tar.gz
+tar zxvf helm-v2.12.3-linux-amd64.tar.gz 
 cd linux-amd64/
+cp -p helm /usr/local/bin/
+```
 
+helm-rbac.yaml
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tiller
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: tiller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: tiller
+    namespace: kube-system
+```
+
+```shell
+kubectl apply -f helm-rbac.yaml 
+
+helm init --service-account tiller --tiller-image registry.aliyuncs.com/google_containers/tiller:v2.12.3 \
+--stable-repo-url https://kubernetes.oss-cn-hangzhou.aliyuncs.com/charts
+#或者：
+helm init --upgrade --service-account tiller --tiller-image registry.aliyuncs.com/google_containers/tiller:v2.12.3 --stable-repo-url https://kubernetes.oss-cn-hangzhou.aliyuncs.com/charts
+
+
+helm version
+```
+
+13.2  ingress-traefik
+```shell
+helm search traefik
+
+# 下载package到本地
+helm fetch stable/traefik
+
+tar xf traefik-1.24.1.tgz
+
+
+helm install -n traefik --set dashboard.enabled=true --set dashboard.domain=traefik.jlpay.com \
+--set rbac.enabled=true stable/traefik --namespace=kube-system
+
+kubectl get svc traefik --namespace kube-system
+
+# 查看 traefik 添加的ingress访问规则 
+kubectl get ingress -n traefik
 ```
