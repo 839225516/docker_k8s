@@ -1,0 +1,89 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: demo-deployment
+spec: 
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: demo
+    spec:
+      containers:
+      - name: demo
+        image: registry.test.io/library/demo:v1.2
+        imagePullPolicy: IfNotPresent
+        #lifecycle:
+        #  postStart:
+        #    exec:
+        #      command: ["/bin/bash","-c","touch /data/app/posp.log; ln -s /data/app/posp.log /data/logs/"]
+        ports:
+        - containerPort: 8282
+          protocol: TCP
+        volumeMounts:
+        - name: app-logs
+          mountPath: /data/logs
+      - name: filebeat
+        image: registry.test.io/library/filebeat:latest
+        imagePullPolicy: IfNotPresent
+        resources:
+          limits:
+            cpu: "1"
+            memory: 1Gi
+          requests: 
+            cpu: 50m
+            memory: 256Mi 
+        volumeMounts:
+        - name: app-logs
+          mountPath: /log
+        - name: filebeat-config
+          mountPath: /etc/filebeat/        
+      volumes:
+      - name: app-logs
+        emptyDir: {}
+      - name: filebeat-config
+        configMap:
+          name: demo-filebeat-config
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo-filebeat-config
+data:
+  filebeat.yml: |
+    filebeat.prospectors:
+    - type: log
+      enable: true
+      paths:
+        - /log/*.log
+      fields:
+        service_name: demo
+      fields_under_root: true
+      multiline.pattern: ^\[
+      multiline.negate: true
+      multiline.match: after
+      tags: yinyi_posp
+    
+    output.redis:
+      enable: true
+      hosts: "elk-redis.test.com"
+      port: 6379
+      key: "logstash:redis"
+      datatype: list                    
+       
+    logging.level: warning
+    
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: demo-svc
+spec:
+  type: NodePort
+  ports:
+  - port: 8282
+    targetPort: 8282
+    nodePort: 31243
+  selector:
+    name: demo
