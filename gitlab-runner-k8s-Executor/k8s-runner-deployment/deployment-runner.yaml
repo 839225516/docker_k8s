@@ -1,0 +1,58 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: runner
+  namespace: gitlab
+  labels:
+    app: runner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: runner
+  template:
+    metadata:
+      labels:
+        app: runner
+    spec:
+      containers:
+      - name: ci-builder
+        image: gitlab/gitlab-runner:latest
+        command:
+        # 命令有点长，做了以下几步：注销当前的 runner name 以防止 runner 冲突；注册新的 runner；启动 runner daemon
+        - /bin/bash
+        - -c
+        - "/usr/bin/gitlab-runner unregister -n $RUNNER_NAME || true; /usr/bin/gitlab-runner register; exec /usr/bin/gitlab-runner run"
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - mountPath: /etc/ssl
+          #subPath: ssl
+          name: ca-crt
+        env:
+        - name: RUNNER_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        envFrom:
+        # 通过 ConfigMap 注入 runner 配置
+        - configMapRef:
+            name: gitlab-runner-cfg
+        # gitlab-runner 自带 Prometheus metrics server，通过上面的 METRICS_SERVER 环境变量配置
+        # 强的一比！
+        ports:
+        - containerPort: 9100
+          name: http-metrics
+          protocol: TCP
+        lifecycle:
+          # 在 pod 停止前，注销这个 runner
+          preStop:
+            exec:
+              command:
+              - /bin/bash
+              - -c
+              - "/usr/bin/gitlab-runner unregister -n $RUNNER_NAME"
+      restartPolicy: Always
+      volumes: 
+      - name: ca-crt
+        configMap:
+          name: cm-ca-crt

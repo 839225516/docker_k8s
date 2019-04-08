@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: gitlab
+  labels:
+    app: gitlab-deployer
+  name: cm-ca-crt                                                                                                                                                                  
+data:
+  ca.crt
+  : |
+    -----BEGIN CERTIFICATE-----
+    MIIDwjCCAqqgAwIBAgIUTMBF4xEfLppdbIgsEni8jOeWxS4wDQYJKoZIhvcNAQEL
+    ...
+    -----END CERTIFICATE-----

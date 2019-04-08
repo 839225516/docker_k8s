@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: gitlab
+  labels:
+    app: gitlab-deployer
+  name: gitlab-runner-cfg
+data:
+  # 具体可用的参数配置以及环境变量配置可以运行 gitlab-runner register --help 查看
+  REGISTER_NON_INTERACTIVE: "true"
+  REGISTER_LOCKED: "false"
+  CI_SERVER_URL: "http://172.20.5.54/"
+  REGISTRATION_TOKEN: "FoN6VUuscn2tfbHJwdsada"
+  METRICS_SERVER: "0.0.0.0:9100"
+  RUNNER_CONCURRENT_BUILDS: "4"
+  RUNNER_REQUEST_CONCURRENCY: "4"
+  RUNNER_TAG_LIST: "k8s-runner"
+  RUNNER_EXECUTOR: "kubernetes"
+  KUBERNETES_NAMESPACE: "gitlab"
+  KUBERNETES_PULL_POLICY: "if-not-present"
+  KUBERNETES_HELPER_IMAGE: "gitlab/gitlab-runner-helper:x86_64-latest"
+  DOCKER_HELPER_IMAGE: "gitlab/gitlab-runner-helper:x86_64-latest"
+  KUBERNETES_HOST: "https://172.20.2.225:6443"
+  KUBERNETES_CA_FILE: "/etc/ssl/ca.crt"
+  KUBERNETES_SERVICE_ACCOUNT: "runner-executor"
+  KUBERNETES_BEARER_TOKEN: "runner-executor的token值"
