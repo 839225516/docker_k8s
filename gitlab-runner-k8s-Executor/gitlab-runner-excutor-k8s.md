@@ -202,6 +202,8 @@ data:
   KUBERNETES_BEARER_TOKEN: "runner-executor的token值"
 ```
 
+** 特别注意 **   
+gitlab-runner的executor在使用docker或者kubernetes时，在执行ci/cd时，会在docker中先拉取 gitlab-runner-helper 镜像，来帮忙git clone 仓库。
 
 
 
