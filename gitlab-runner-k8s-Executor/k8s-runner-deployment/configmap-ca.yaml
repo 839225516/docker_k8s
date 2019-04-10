@@ -4,11 +4,11 @@ metadata:
   namespace: gitlab
   labels:
     app: gitlab-deployer
-  name: cm-ca-crt                                                                                                                                                                  
+  name: cm-ca-crt
 data:
-  ca.crt
-  : |
+  ca.crt: |
     -----BEGIN CERTIFICATE-----
+    MIIDwjCCAqqgAwIBAgIUTMBF4xEfLppdbIgsEni8jOeWxS4wDQYJKoZIhvcNAQEL
     MIIDwjCCAqqgAwIBAgIUTMBF4xEfLppdbIgsEni8jOeWxS4wDQYJKoZIhvcNAQEL
     ...
     -----END CERTIFICATE-----
