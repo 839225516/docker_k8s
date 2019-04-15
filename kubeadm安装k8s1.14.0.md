@@ -290,7 +290,7 @@ kubeadm token create --print-join-command
 9. 安装 coreDNS 插件
 ```shell 
 # 替换 pod CIDR
-curl -fsSL https://raw.githubusercontent.com/839225516/docker_k8s/master/k8s_install_1.14.0_ha/calico.yaml | sed "s!10.172.0.0/16!${CIDR}!g" | kubectl apply -f -
+curl -fsSL https://raw.githubusercontent.com/839225516/docker_k8s/master/k8s_install_1.14.0_ha/calico.yaml | sed sed "s#10..254.0.0/16#${CIDR}#g" | kubectl apply -f -
 ```
 
 10. master node 去污点参考Schedule    
@@ -389,3 +389,13 @@ kubectl get svc traefik --namespace kube-system
 # 查看 traefik 添加的ingress访问规则 
 kubectl get ingress -n traefik
 ```
+
+###### 安装 dash-board 1.10
+拉取所需镜像和 yaml 文件
+```shell 
+docker pull registry.cn-hangzhou.aliyuncs.com/google_containers/kubernetes-dashboard-amd64:v1.10.0
+docker tag registry.cn-hangzhou.aliyuncs.com/google_containers/kubernetes-dashboard-amd64:v1.10.0  k8s.gcr.io/kubernetes-dashboard-amd64:v1.10.0
+wget https://raw.githubusercontent.com/kubernetes/dashboard/v1.10.0/src/deploy/recommended/kubernetes-dashboard.yaml
+```
+
+
