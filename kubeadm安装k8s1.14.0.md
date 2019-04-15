@@ -290,7 +290,7 @@ kubeadm token create --print-join-command
 9. 安装 coreDNS 插件
 ```shell 
 # 替换 pod CIDR
-curl -fsSL https://raw.githubusercontent.com/839225516/docker_k8s/master/k8s_install_1.14.0_ha/calico.yaml | sed sed "s#10..254.0.0/16#${CIDR}#g" | kubectl apply -f -
+curl -fsSL https://raw.githubusercontent.com/839225516/docker_k8s/master/k8s_install_1.14.0_ha/calico.yaml | sed sed "s#10.254.0.0/16#${CIDR}#g" | kubectl apply -f -
 ```
 
 10. master node 去污点参考Schedule    
