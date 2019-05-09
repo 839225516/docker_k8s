@@ -290,7 +290,7 @@ kubeadm token create --print-join-command
 9. 安装 coreDNS 插件
 ```shell 
 # 替换 pod CIDR
-curl -fsSL https://raw.githubusercontent.com/839225516/docker_k8s/master/k8s_install_1.14.0_ha/calico.yaml | sed sed "s#10.254.0.0/16#${CIDR}#g" | kubectl apply -f -
+curl -fsSL https://raw.githubusercontent.com/839225516/docker_k8s/master/k8s_install_1.14.0_ha/calico.yaml | sed "s#10.172.0.0/16#${CIDR}#g" | kubectl apply -f -
 ```
 
 10. master node 去污点参考Schedule    
@@ -396,6 +396,26 @@ kubectl get ingress -n traefik
 docker pull registry.cn-hangzhou.aliyuncs.com/google_containers/kubernetes-dashboard-amd64:v1.10.0
 docker tag registry.cn-hangzhou.aliyuncs.com/google_containers/kubernetes-dashboard-amd64:v1.10.0  k8s.gcr.io/kubernetes-dashboard-amd64:v1.10.0
 wget https://raw.githubusercontent.com/kubernetes/dashboard/v1.10.0/src/deploy/recommended/kubernetes-dashboard.yaml
+
+
+# 创建一个名为：kubernetes-dashboard-certs的secret
+# 使用openssl生成自签名证书
+
+# 1) 生成私钥
+openssl genrsa -out dashboard.key 2048
+
+# 2) 生成证书签名请求csr
+openssl req -new -out dashboard.csr -key dashboard.key -subj '/O=jlpay.com/CN=k8s.dashboard'
+
+# 3) 生成自签名证书
+openssl x509 -req -days 3650 -in dashboard.csr -signkey dashboard.key -out dashboard.crt
+
+# 4) 查看证书
+openssl x509 -in dashboard.crt -text -noout
+
+kubectl -n kube-system create secret generic kubernetes-dashboard-certs --from-file=dashboard.key --from-file=dashboard.crt
+
+
 ```
 
 
