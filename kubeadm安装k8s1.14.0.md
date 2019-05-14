@@ -414,8 +414,48 @@ openssl x509 -req -days 3650 -in dashboard.csr -signkey dashboard.key -out dashb
 openssl x509 -in dashboard.crt -text -noout
 
 kubectl -n kube-system create secret generic kubernetes-dashboard-certs --from-file=dashboard.key --from-file=dashboard.crt
-
-
 ```
 
+
+###### 安装 metrics-server
+metrics-server这个容器不能通过CoreDNS 解析各Node的主机名，metrics-server连节点时默认是连接节点的主机名，需要加个参数，让它连接节点的IP，同时因为10250是https端口，连接它时需要提供证书，所以加上–kubelet-insecure-tls，表示不验证客户端证书
+
+```shell 
+git clone https://github.com/kubernetes-incubator/metrics-server.git
+
+#编辑~/metrics-server/deploy/1.8+/metrics-server-deployment.yaml
+      containers:
+      - name: metrics-server
+        #image: k8s.gcr.io/metrics-server-amd64:v0.3.2
+        image: registry.cn-hangzhou.aliyuncs.com/google_containers/metrics-server-amd64:v0.3.2
+        imagePullPolicy: IfNotPresent
+        command:
+        - /metrics-server
+        - --kubelet-preferred-address-types=InternalIP
+        - --kubelet-insecure-tls
+
+
+
+# 下载镜像
+docker pull registry.cn-hangzhou.aliyuncs.com/google_containers/metrics-server-amd64:v0.3.2
+
+
+# 安装 metrics-server
+cd metrics-server/deploy/1.8+
+kubectl apply -f .
+
+
+## Metrics API
+# 可以通过 kubectl proxy 来访问 Metrics API：
+http://127.0.0.1:8001/apis/metrics.k8s.io/v1beta1/nodes
+http://127.0.0.1:8001/apis/metrics.k8s.io/v1beta1/nodes/
+http://127.0.0.1:8001/apis/metrics.k8s.io/v1beta1/pods
+http://127.0.0.1:8001/apis/metrics.k8s.io/v1beta1/namespace//pods/
+
+# 也可以直接通过 kubectl 命令来访问这些 API，比如:
+kubectl get --raw /apis/metrics.k8s.io/v1beta1/nodes
+kubectl get --raw "/apis/metrics.k8s.io/v1beta1/nodes"
+kubectl get --raw /apis/metrics.k8s.io/v1beta1/nodes/
+kubectl get --raw /apis/metrics.k8s.io/v1beta1/namespace//pods/ | jq
+```
 
