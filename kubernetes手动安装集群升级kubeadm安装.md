@@ -471,9 +471,51 @@ kubeadm init phase preflight --config kubeadm-config.yaml
 kubectl taint nodes NODENAME node-role.kubernetes.io/master-
 ```
 
-安装完一个节点后，先验证集群是否正常，coredns是否能正常解析，正常后，继续升级下一个节点或master    
+安装完一个节点后，先验证集群是否正常，coredns是否能正常解析，正常后，继续升级下一个节点或master     
+
+    查看kube-apiserver, kube-controller-manger, kube-scheduler, kube-proxy的日志，看是否有异常
+    验证coredns是否正常
 
 
+##### 升级中存在的问题
+1) kube-proxy问题：  
+   使用kubeadm安装k8s集群会使 kube-proxy 以static-pod的方式启动，当master安装好后，其它的节点也会自动启动kube-proxy,可以将其它节点的kube-proxy服务先停了，停kube-proxy对老的pod没有影响
+
+2) coredns问题：
+   老版本中coredns的ClusterIP 是*.*.*.2; 新版本默认是*.*.*.10; 有两种解决方式，一种是重新安装coredns，并把kubelet的dns配置项 --cluster_dns 改成*.*.*.10   
+   二是kubeadm配置中修改clusterDNS:10.254.0.2,注意这里也有一个问题，如果要重新安装的话要手动生成svc或修改svc:  
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/port: "9153"
+    prometheus.io/scrape: "true"
+  labels:
+    k8s-app: kube-dns
+    kubernetes.io/cluster-service: "true"
+    kubernetes.io/name: KubeDNS
+  name: kube-dns
+  namespace: kube-system
+  selfLink: /api/v1/namespaces/kube-system/services/kube-dns
+spec:
+  clusterIP: 10.254.0.2
+  ports:
+  - name: dns
+    port: 53
+    protocol: UDP
+    targetPort: 53
+  - name: dns-tcp
+    port: 53
+    protocol: TCP
+    targetPort: 53
+  selector:
+    k8s-app: kube-dns
+  sessionAffinity: None
+  type: ClusterIP
+status:
+  loadBalancer: {}
+```
 
 ###### kubeadm 升级kubernetes集群版本
 ``` shell

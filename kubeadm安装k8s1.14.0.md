@@ -459,3 +459,158 @@ kubectl get --raw /apis/metrics.k8s.io/v1beta1/nodes/
 kubectl get --raw /apis/metrics.k8s.io/v1beta1/namespace//pods/ | jq
 ```
 
+##### 安装 prometheus-operator
+官方github: https://github.com/coreos/prometheus-operator   
+这里使用另一个基于官方版本快速部署的： https://github.com/camilb/prometheus-kubernetes.git   
+
+```shell
+git clone https://github.com/camilb/prometheus-kubernetes.git
+cd  prometheus-kubernetes
+
+# 执行部署脚本, 本地非云环境选择 4) Custom
+./deploy
+
+# 删除安装，执行脚本 teardown
+```
+安装kube-state-metrics时注意镜像下载
+```shell
+docker pull registry.cn-hangzhou.aliyuncs.com/google_containers/kube-state-metrics:v1.5.0
+docker pull registry.cn-hangzhou.aliyuncs.com/google_containers/addon-resizer:1.7
+```
+
+####### 如果安装是metrics-server，而不是heapster，要修改prometheus-k8s-service-monitor-kubelet.yaml
+```yaml
+- port: cadvisor
+  interval: 30s
+  honorLabels: true 
+
+### to
+- path: /metrics/cadvisor
+  port: http-metrics
+  interval: 30s
+  honorLabels: true
+```
+
+##### 使用官方github安装 prometheus-operator
+使用deployment部署prometheus-operator
+```shell
+git clone https://github.com/coreos/prometheus-operator.git
+kubectl create namespace monitoring
+sed -i "s,namespace: default,namespace: monitoring,g" bundle.yaml
+kubectl -n monitoring apply -f bundle.yaml
+#clusterrolebinding.rbac.authorization.k8s.io/prometheus-operator created
+#clusterrole.rbac.authorization.k8s.io/prometheus-operator created
+#deployment.apps/prometheus-operator created
+#serviceaccount/prometheus-operator created
+
+kubectl -n monitoring get pods
+```
+
+使用operator管理prometheus
+####### 创建prometheus-k8s的ServiceAccount，并赋予该账号相应的集群访问权限
+prometheus-k8s-rbac.yaml
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus-k8s
+  namespace: monitoring
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: prometheus-k8s
+rules:
+- apiGroups: [""]
+  resources:
+  - nodes
+  - services
+  - endpoints
+  - pods
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources:
+  - configmaps
+  verbs: ["get"]
+- nonResourceURLs: ["/metrics"]
+  verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: prometheus-k8s
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: prometheus-k8s
+subjects:
+- kind: ServiceAccount
+  name: prometheus-k8s
+  namespace: monitoring
+```
+
+prometheus-k8s-sts.yaml
+```yaml
+# 创建prometheus实例
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: k8s
+  labels:
+    prometheus: k8s
+  namespace: monitoring
+spec:
+  replicas: 2
+  version: v2.8.1
+  serviceAccountName: prometheus-k8s
+  serviceMonitorSelector: 
+    matchExpressions:
+    - {key: k8s-app, operator: Exists}
+  ruleSelector:
+    matchLabels:
+      role: alert-rules
+      prometheus: k8s
+  resources:
+    requests:
+      memory: 1Gi
+```
+
+prometheus-k8s-service.yaml
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    prometheus: k8s
+  name: prometheus-k8s
+  namespace: monitoring
+spec:
+  ports:
+  - name: web
+    port: 9090
+    protocol: TCP
+    targetPort: web
+  selector:
+    prometheus: k8s
+```
+
+###### 使用Operator管理Alertmanager实例
+prometheus-k8s-alertmanager.yaml
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: Alertmanager
+metadata:
+  name: main
+  labels:
+    alertmanager: main
+  namespace: monitoring
+spec:
+  replicas: 3
+  version: v0.16.1
+```
+
+由于Prometheus Operator通过Statefulset的方式创建的Alertmanager实例，在默认情况下，会通过alertmanager-{ALERTMANAGER_NAME}的命名规则去查找Secret配置并以文件挂载的方式，将Secret的内容作为配置文件挂载到Alertmanager实例当中。因此，这里还需要为Alertmanager创建相应的配置内容，如下所示，是Alertmanager的配置文件： 
+alertmanager.yaml  
+```yaml
+
+```
