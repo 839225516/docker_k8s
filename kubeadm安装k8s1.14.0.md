@@ -420,8 +420,11 @@ kubectl -n kube-system create secret generic kubernetes-dashboard-certs --from-f
 ###### 安装 metrics-server
 metrics-server这个容器不能通过CoreDNS 解析各Node的主机名，metrics-server连节点时默认是连接节点的主机名，需要加个参数，让它连接节点的IP，同时因为10250是https端口，连接它时需要提供证书，所以加上–kubelet-insecure-tls，表示不验证客户端证书
 
+https://github.com/kubernetes/kubernetes/tree/release-1.14/cluster/addons/metrics-server（推荐使用此方式）
+
 ```shell 
 git clone https://github.com/kubernetes-incubator/metrics-server.git
+
 
 #编辑~/metrics-server/deploy/1.8+/metrics-server-deployment.yaml
       containers:
@@ -434,7 +437,20 @@ git clone https://github.com/kubernetes-incubator/metrics-server.git
         - --kubelet-preferred-address-types=InternalIP
         - --kubelet-insecure-tls
 
-
+## 在新的版本中，授权文内没有 node/stats 的权限，需要手动去添加
+vim resource-reader.yaml 
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: system:metrics-server
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - nodes
+  - nodes/stats  ## 添加此参数
+  - namespaces
 
 # 下载镜像
 docker pull registry.cn-hangzhou.aliyuncs.com/google_containers/metrics-server-amd64:v0.3.2
