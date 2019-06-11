@@ -369,6 +369,9 @@ modprobe br_netfilter
 sysctl -p /etc/sysctl.d/k8s.conf
 ls /proc/sys/net/bridge
 
+yum install ipset -y
+yum install ipvsadm -y
+
 # 5) 安装docker 
 yum install -y yum-utils device-mapper-persistent-data lvm2
 yum-config-manager \
@@ -376,7 +379,7 @@ yum-config-manager \
     https://download.docker.com/linux/centos/docker-ce.repo
 
 yum install -y --setopt=obsoletes=0 \
-  docker-ce-18.06.1.ce-3.el7
+  docker-ce-17.12.1.ce-1.el7.centos
 
 cat > /etc/docker/daemon.json << EOF
 {
@@ -408,6 +411,13 @@ EOF
 
 yum install kubeadm-1.11.6 kubelet-1.11.6 kubectl-1.11.6
 
+
+#### 修改kubelet的root-dir路径为 /data/kubelet
+cat > /etc/sysconfig/kubelet << EOF
+KUBELET_EXTRA_ARGS=--root-dir=/data/kubelet
+EOF
+
+
 systemctl start kubelet
 systemctl enable kubelet
 ```
@@ -419,7 +429,25 @@ systemctl enable kubelet
     将node节点改成,不可调度状态  kubectl cordon {NODE-NAME}
     先升级其中一个master节点，升级成功后再升级其它的node节点
 
-####### 注意，使用kubeadm安装k8s集群会使 kube-proxy 以static-pod的方式启动，当master安装好后，其它的节点也会自动启动kube-proxy,可以将其它节点的kube-proxy服务先停了，停kube-proxy对老的pod没有影响
+####### 注意，使用kubeadm安装k8s集群会使 kube-proxy 以static-pod的方式启动，当master安装好后，其它的节点也会自动启动kube-proxy,可以将kube-proxy的镜像地址改成google官方的，这样其它节点就下载镜像不成功，不会启动
+
+
+##### 删除原群集的role，secert的etcd上的key
+```shell
+#删除etcd数据
+ETCDCTL_API=3 etcdctl --endpoints="https://10.3.16.20:2379,https://10.3.16.30:2379,https://10.3.16.40:2379" --cert="/etc/kubernetes/ssl/etcd.pem" --key="/etc/kubernetes/ssl/etcd-key.pem" --cacert="/etc/kubernetes/ssl/ca.pem" del /registry/clusterrolebindings --prefix 
+
+ETCDCTL_API=3 etcdctl --endpoints="https://10.3.16.20:2379,https://10.3.16.30:2379,https://10.3.16.40:2379" --cert="/etc/kubernetes/ssl/etcd.pem" --key="/etc/kubernetes/ssl/etcd-key.pem" --cacert="/etc/kubernetes/ssl/ca.pem" del /registry/clusterroles --prefix 
+
+ETCDCTL_API=3 etcdctl --endpoints="https://10.3.16.20:2379,https://10.3.16.30:2379,https://10.3.16.40:2379" --cert="/etc/kubernetes/ssl/etcd.pem" --key="/etc/kubernetes/ssl/etcd-key.pem" --cacert="/etc/kubernetes/ssl/ca.pem" del /registry/roles --prefix 
+
+ETCDCTL_API=3 etcdctl --endpoints="https://10.3.16.20:2379,https://10.3.16.30:2379,https://10.3.16.40:2379" --cert="/etc/kubernetes/ssl/etcd.pem" --key="/etc/kubernetes/ssl/etcd-key.pem" --cacert="/etc/kubernetes/ssl/ca.pem" del /registry/rolebindings --prefix
+
+
+ETCDCTL_API=3 etcdctl --endpoints="https://10.3.16.20:2379,https://10.3.16.30:2379,https://10.3.16.40:2379" --cert="/etc/kubernetes/ssl/etcd.pem" --key="/etc/kubernetes/ssl/etcd-key.pem" --cacert="/etc/kubernetes/ssl/ca.pem" del /registry/secrets --prefix
+```
+
+
 
 ##### 安装master节点
 先将前面生成的证书文件上到目录 /etc/kubernetes/pki/  
@@ -467,6 +495,11 @@ kubeadm init phase preflight --config kubeadm-config.yaml
 # 13) 安装其它的组件，kube-proxy , coredns
 # kubeadm init phase addon [all|kube-proxy|coredns] --config kubeadm-config.yaml
 
+
+mkdir -p $HOME/.kube
+cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+chown $(id -u):$(id -g) $HOME/.kube/config
+
 # 安装完master节点后，如果要去除master污点，执行下面命令
 kubectl taint nodes NODENAME node-role.kubernetes.io/master-
 ```
@@ -479,11 +512,13 @@ kubectl taint nodes NODENAME node-role.kubernetes.io/master-
 
 ##### 升级中存在的问题
 1) kube-proxy问题：  
-   使用kubeadm安装k8s集群会使 kube-proxy 以static-pod的方式启动，当master安装好后，其它的节点也会自动启动kube-proxy,可以将其它节点的kube-proxy服务先停了，停kube-proxy对老的pod没有影响
+  
 
 2) coredns问题：
    老版本中coredns的ClusterIP 是*.*.*.2; 新版本默认是*.*.*.10; 有两种解决方式，一种是重新安装coredns，并把kubelet的dns配置项 --cluster_dns 改成*.*.*.10   
-   二是kubeadm配置中修改clusterDNS:10.254.0.2,注意这里也有一个问题，如果要重新安装的话要手动生成svc或修改svc:  
+   二是kubeadm配置中修改clusterDNS:10.254.0.2,注意这里也有一个问题，如果要重新安装的话要手动生成svc或修改svc:
+   先删除dns     
+   kubectl get svc,deploy,configmap -n kube-system|grep dns | awk '{system("kubectl delete "$1" -n kube-system")}'  
 ```yaml
 apiVersion: v1
 kind: Service
@@ -517,6 +552,12 @@ status:
   loadBalancer: {}
 ```
 
+3) 升级node时，先装node从群集中删除
+```shell
+kubectl drain 010.k8s.master.ks --delete-local-data --ignore-daemonsets
+kubectl delete node 010.k8s.master.ks
+```
+
 ###### kubeadm 升级kubernetes集群版本
 ``` shell
 # 查询可用的版本
@@ -524,7 +565,20 @@ yum list --showduplicates | grep 'kubeadm\|kubectl\|kubelet'
 
 yum update kubeadm-1.12.6-0 kubectl-1.12.6-0 kubelet-1.12.6-0
 
-kubeadm upgrade apply --config=kubeadm-config-test.yaml
+###### kubectl drain $node --ignore-daemonsets 
+
+\mv /etc/sysconfig/kubelet /tmp/
+
+kubeadm upgrade apply --config=kubeadm-config.yaml
+
+\mv /tmp/kubelet /etc/sysconfig/
+
+
+systemctl daemon-reload
+systemctl restart kubelet
+systemctl status kubelet
+
+###### kubectl uncordon $node
 
 #使用 kubectl version 来查看状态
 kubectl version
@@ -539,3 +593,36 @@ systemctl restart kubelet
 ```
 ##### Node 节点升级
 升级对应的 kubelet kubeadm kubectl 的版本，拉取对应版本的镜像即可
+yum update kubeadm-1.12.6 kubelet-1.12.6 kubectl-1.12.6
+
+# master 节点执行
+kubectl cordon $NODE
+
+kubeadm upgrade node config --kubelet-version $(kubelet --version | cut -d ' ' -f 2)
+
+cat > /etc/sysconfig/kubelet << EOF
+KUBELET_EXTRA_ARGS=--root-dir=/data/kubelet
+EOF
+
+
+systemctl restart kubelet
+systemctl status kubelet
+
+# master 节点执行
+kubectl uncordon $NODE
+
+
+===========================================
+删除etcd数据
+```shell
+ETCDCTL_API=3 etcdctl --endpoints="https://10.3.16.20:2379,https://10.3.16.30:2379,https://10.3.16.40:2379" --cert="/etc/kubernetes/ssl/etcd.pem" --key="/etc/kubernetes/ssl/etcd-key.pem" --cacert="/etc/kubernetes/ssl/ca.pem" del /registry/clusterrolebindings --prefix 
+
+ETCDCTL_API=3 etcdctl --endpoints="https://10.3.16.20:2379,https://10.3.16.30:2379,https://10.3.16.40:2379" --cert="/etc/kubernetes/ssl/etcd.pem" --key="/etc/kubernetes/ssl/etcd-key.pem" --cacert="/etc/kubernetes/ssl/ca.pem" del /registry/clusterroles --prefix 
+
+ETCDCTL_API=3 etcdctl --endpoints="https://10.3.16.20:2379,https://10.3.16.30:2379,https://10.3.16.40:2379" --cert="/etc/kubernetes/ssl/etcd.pem" --key="/etc/kubernetes/ssl/etcd-key.pem" --cacert="/etc/kubernetes/ssl/ca.pem" del /registry/roles --prefix 
+
+ETCDCTL_API=3 etcdctl --endpoints="https://10.3.16.20:2379,https://10.3.16.30:2379,https://10.3.16.40:2379" --cert="/etc/kubernetes/ssl/etcd.pem" --key="/etc/kubernetes/ssl/etcd-key.pem" --cacert="/etc/kubernetes/ssl/ca.pem" del /registry/rolebindings --prefix
+
+
+ETCDCTL_API=3 etcdctl --endpoints="https://10.3.16.20:2379,https://10.3.16.30:2379,https://10.3.16.40:2379" --cert="/etc/kubernetes/ssl/etcd.pem" --key="/etc/kubernetes/ssl/etcd-key.pem" --cacert="/etc/kubernetes/ssl/ca.pem" del /registry/secrets --prefix
+```
