@@ -45,3 +45,20 @@ WORKDIR /data
 
 CMD ["apache-tomcat-8.5.24/bin/catalina.sh","run"]
 ```
+
+#### nodejs 安装 ####
+```dockerfile
+#nodejs:v10.16
+FROM 172.20.8.199:5001/library/centos:latest
+MAINTAINER test
+
+# code & Timezone
+ENV LANG en_US.UTF-8
+RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai  /etc/localtime
+
+# install nodejs
+ADD node-v10.16.0-linux-x64.tar.gz /usr/local/
+ENV NODEJS_HOME /usr/local/node-v10.16.0-linux-x64
+ENV PATH $PATH:$NODEJS_HOME/bin
+```
+
