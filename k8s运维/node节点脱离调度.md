@@ -1,4 +1,16 @@
 ##### 将节点脱离调度，使它不再部署新的Pod
+```shell
+查看 node NAME
+# kubectl get nodes
+
+根据node-NAME 将node 设置为不可以使用
+# kubectl cordon {node-NAME}
+
+将node 设置为可以使用
+# kubectl uncordon {node-NAME}
+```
+
+或者使用下面的方式    
 unschedul_node.yaml
 ```yaml
 apiVersion: V1
