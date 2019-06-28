@@ -29,6 +29,9 @@ ENV JAVA_HOME /usr/local/jdk1.8.0_151
 ENV JRE_HOME $JAVA_HOME/jre
 ENV CLASSPATH .:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar:$JRE_HOME/lib
 ENV PATH $PATH:$JAVA_HOME/bin
+
+RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai  /etc/localtime \
+    && echo "Asia/Shanghai" > /etc/timezone
 ```
 
 #### tomcat ####
