@@ -242,7 +242,7 @@ After=docker.service
 [Service]
 User=root
 PermissionsStartOnly=true
-ExecStart=/usr/bin/docker run -p 127.0.0.1:6443:6443 \
+ExecStart=/usr/bin/docker run --restart=always -p 127.0.0.1:6443:6443 \
                               -v /etc/nginx:/etc/nginx \
                               --name nginx-proxy \
                               --net=host \
